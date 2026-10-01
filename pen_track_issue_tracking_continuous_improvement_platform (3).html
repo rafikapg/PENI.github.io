@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full bg-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PEN-TRACK - Issue Tracking & Continuous Improvement Platform</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            500: '#f97316',
+                            600: '#ea580c',
+                            700: '#c2410c',
+                            900: '#7c2d12',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white !important; color: black !important; }
+        }
+        .print-only { display: none; }
+    </style>
+</head>
+<body class="h-full text-slate-800 flex flex-col font-sans antialiased">
+
+    <!-- Lock Screen / Password Verification for Application Access -->
+    <div id="lockScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-md p-4 transition-all duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-8 text-center relative overflow-hidden">
+            <div class="absolute -top-12 -right-12 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl"></div>
+            
+            <div class="w-16 h-16 bg-amber-500 text-slate-950 font-black rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-lg shadow-amber-500/20">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            
+            <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">PEN-TRACK</h2>
+            <p class="text-slate-500 text-xs mt-1 mb-6">Issue Tracking & Continuous Improvement Platform</p>
+            
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                <div class="text-left">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Kata Sandi Akses App</label>
+                    <div class="relative">
+                        <input type="password" id="passwordInput" placeholder="Masukkan kata sandi..." required
+                            class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition text-slate-800 font-medium pl-10">
+                        <i class="fa-solid fa-key absolute left-3.5 top-3.5 text-slate-400"></i>
+                    </div>
+                </div>
+
+                <div id="loginError" class="hidden text-xs text-red-600 bg-red-50 p-2.5 rounded-lg border border-red-200 font-medium">
+                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> Kata sandi salah! Silakan coba lagi.
+                </div>
+
+                <button type="submit" class="w-full py-3 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-slate-950 font-bold rounded-xl shadow-lg shadow-amber-500/30 transition duration-150 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-lock-open"></i> Masuk ke PEN-TRACK
+                </button>
+            </form>
+            
+            <div class="mt-6 pt-6 border-t border-slate-100 text-[11px] text-slate-400">
+                &copy; 2026 PEN-TRACK Operational & Continuous Improvement Platform
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Web Application Wrapper -->
+    <div id="mainApp" class="hidden flex-col flex-1 min-h-screen">
+
+        <!-- Top Navigation Bar -->
+        <header class="bg-slate-900 text-white sticky top-0 z-30 shadow-md no-print">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center text-slate-950 font-black shadow-lg shadow-amber-500/20">
+                        <i class="fa-solid fa-chart-line text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-extrabold text-lg sm:text-xl leading-tight tracking-tight text-white flex items-center gap-2">
+                            PEN-TRACK
+                            <span class="text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">Platform</span>
+                        </h1>
+                        <p class="text-[11px] text-slate-400 hidden sm:block">Issue Tracking & Continuous Improvement Platform</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <button onclick="openNewReportModal()" class="bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition shadow-md">
+                        <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Buat Laporan Temuan</span>
+                    </button>
+                    
+                    <button onclick="lockApplication()" title="Kunci / Keluar dari PEN-TRACK" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition flex items-center gap-2">
+                        <i class="fa-solid fa-lock text-base"></i>
+                        <span class="text-xs font-semibold hidden md:inline">Keluar</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+            
+            <!-- Welcome Banner -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm no-print">
+                <div>
+                    <h2 class="text-xl sm:text-2xl font-bold text-slate-900">Dashboard PEN-TRACK</h2>
+                    <p class="text-xs sm:text-sm text-slate-500 mt-1">Pemantauan real-time anomali, penyimpangan K3/HSE, kualitas produk, dan efisiensi operasional.</p>
+                </div>
+                <div class="flex items-center gap-2 text-xs font-medium text-slate-600 bg-slate-100 px-3.5 py-2 rounded-xl self-start md:self-auto border border-slate-200">
+                    <i class="fa-solid fa-calendar-day text-amber-500"></i>
+                    <span id="currentDateDisplay">Kamis, 1 Oktober 2026</span>
+                </div>
+            </div>
+
+            <!-- KPI Summary Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 no-print">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-start">
+                        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Temuan</span>
+                        <div class="p-2 bg-slate-100 text-slate-700 rounded-lg"><i class="fa-solid fa-clipboard-list"></i></div>
+                    </div>
+                    <div class="mt-2">
+                        <span id="statTotal" class="text-2xl sm:text-3xl font-extrabold text-slate-900">0</span>
+                        <span class="text-xs text-slate-400 block mt-0.5">Semua isu</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-start">
+                        <span class="text-xs font-semibold text-red-600 uppercase tracking-wider">Status Open</span>
+                        <div class="p-2 bg-red-50 text-red-600 rounded-lg"><i class="fa-solid fa-circle-exclamation"></i></div>
+                    </div>
+                    <div class="mt-2">
+                        <span id="statOpen" class="text-2xl sm:text-3xl font-extrabold text-red-600">0</span>
+                        <span class="text-xs text-slate-400 block mt-0.5">Perlu tindakan</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-start">
+                        <span class="text-xs font-semibold text-amber-600 uppercase tracking-wider">In Progress</span>
+                        <div class="p-2 bg-amber-50 text-amber-600 rounded-lg"><i class="fa-solid fa-spinner"></i></div>
+                    </div>
+                    <div class="mt-2">
+                        <span id="statInProgress" class="text-2xl sm:text-3xl font-extrabold text-amber-600">0</span>
+                        <span class="text-xs text-slate-400 block mt-0.5">Proses perbaikan</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-start">
+                        <span class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Closed CAPA</span>
+                        <div class="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><i class="fa-solid fa-circle-check"></i></div>
+                    </div>
+                    <div class="mt-2">
+                        <span id="statClosed" class="text-2xl sm:text-3xl font-extrabold text-emerald-600">0</span>
+                        <span class="text-xs text-slate-400 block mt-0.5">Selesai & tuntas</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart Visualizations -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 no-print">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2">
+                            <i class="fa-solid fa-chart-pie text-amber-500"></i> Breakdown Kategori Anomali
+                        </h3>
+                    </div>
+                    <div class="h-64 relative flex items-center justify-center">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2">
+                            <i class="fa-solid fa-chart-bar text-amber-500"></i> Distribusi Severity & Status Penyelesaian
+                        </h3>
+                    </div>
+                    <div class="h-64 relative">
+                        <canvas id="severityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Incident Reports Table -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden no-print">
+                <div class="p-5 border-b border-slate-100 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <h3 class="font-bold text-slate-900 text-lg flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-slate-600"></i> Daftar Issue Tracking & CAPA (PEN-TRACK)
+                        </h3>
+                        <span id="tableRecordCount" class="text-xs bg-slate-100 text-slate-600 font-semibold px-3 py-1 rounded-full w-max">Showing 0 entries</span>
+                    </div>
+
+                    <!-- Search Bar and Category Filters -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div class="relative">
+                            <input type="text" id="searchInput" oninput="filterReports()" placeholder="Cari ID, area, judul, PIC..." 
+                                class="w-full pl-9 pr-4 py-2 bg-slate-50 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                        </div>
+
+                        <div>
+                            <select id="filterCategory" onchange="filterReports()" class="w-full py-2 px-3 bg-slate-50 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+                                <option value="">Semua Kategori</option>
+                                <option value="K3/HSE">K3 / HSE</option>
+                                <option value="Quality Control">Quality Control</option>
+                                <option value="Maintenance">Maintenance & Equipment</option>
+                                <option value="Operational">Operational Procedure</option>
+                                <option value="Lingkungan">Lingkungan (EHS)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <select id="filterSeverity" onchange="filterReports()" class="w-full py-2 px-3 bg-slate-50 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+                                <option value="">Semua Tingkat Risiko</option>
+                                <option value="Low">Low</option>
+                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                                <option value="Critical">Critical</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <select id="filterStatus" onchange="filterReports()" class="w-full py-2 px-3 bg-slate-50 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+                                <option value="">Semua Status</option>
+                                <option value="Open">Open</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Closed">Closed</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table Content -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-[11px] font-bold uppercase tracking-wider">
+                                <th class="p-4">No. Ref PEN-TRACK</th>
+                                <th class="p-4">Tanggal & Area</th>
+                                <th class="p-4">Kategori & Risk</th>
+                                <th class="p-4">Deskripsi Issue</th>
+                                <th class="p-4">PIC / Deadline</th>
+                                <th class="p-4">Status</th>
+                                <th class="p-4 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportsTableBody" class="divide-y divide-slate-100 text-xs">
+                            <!-- Rows generated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty State -->
+                <div id="emptyState" class="hidden py-12 text-center text-slate-400">
+                    <i class="fa-solid fa-folder-open text-4xl mb-3 opacity-40"></i>
+                    <p class="text-sm font-medium">Tidak ada data temuan PEN-TRACK yang sesuai filter.</p>
+                </div>
+            </div>
+
+            <!-- Footer Banner -->
+            <footer class="text-center py-4 text-xs text-slate-400 no-print border-t border-slate-200">
+                PEN-TRACK Platform &copy; 2026 Issue Tracking & Continuous Improvement Platform.
+            </footer>
+
+        </main>
+    </div>
+
+    <!-- Modal: Password Lock Verification for "Aksi" Button -->
+    <div id="actionAuthModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-sm w-full p-6 relative overflow-hidden">
+            <div class="w-12 h-12 bg-amber-500/10 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-xl">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            
+            <h3 class="text-lg font-extrabold text-slate-900 text-center">Otorisasi Akses Aksi</h3>
+            <p class="text-xs text-slate-500 text-center mt-1 mb-5">Masukkan kata sandi otorisasi untuk membuka detail dan update temuan.</p>
+            
+            <form id="actionAuthForm" onsubmit="handleActionAuth(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Kata Sandi Otorisasi Aksi</label>
+                    <div class="relative">
+                        <input type="password" id="actionAuthPassword" placeholder="Masukkan kata sandi..." required
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 outline-none text-xs text-slate-800 font-medium pl-9">
+                        <i class="fa-solid fa-key absolute left-3 top-3 text-slate-400 text-xs"></i>
+                    </div>
+                </div>
+
+                <div id="actionAuthError" class="hidden text-xs text-red-600 bg-red-50 p-2 rounded-lg border border-red-200 font-medium text-center">
+                    <i class="fa-solid fa-circle-exclamation mr-1"></i> Kata sandi salah! Akses ditolak.
+                </div>
+
+                <div class="flex items-center gap-2 pt-2">
+                    <button type="button" onclick="closeActionAuthModal()" class="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition">Batal</button>
+                    <button type="submit" class="w-1/2 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs shadow-md transition">Buka Akses</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Password Lock Verification for "Hapus Laporan / Delete" Button -->
+    <div id="deleteAuthModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-sm w-full p-6 relative overflow-hidden">
+            <div class="w-12 h-12 bg-red-500/10 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-xl">
+                <i class="fa-solid fa-trash-can"></i>
+            </div>
+            
+            <h3 class="text-lg font-extrabold text-slate-900 text-center">Otorisasi Hapus Laporan</h3>
+            <p class="text-xs text-slate-500 text-center mt-1 mb-5">Penghapusan data memerlukan verifikasi kata sandi otorisasi.</p>
+            
+            <form id="deleteAuthForm" onsubmit="handleDeleteAuth(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Kata Sandi Otorisasi Hapus</label>
+                    <div class="relative">
+                        <input type="password" id="deleteAuthPassword" placeholder="Masukkan kata sandi..." required
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-500 outline-none text-xs text-slate-800 font-medium pl-9">
+                        <i class="fa-solid fa-key absolute left-3 top-3 text-slate-400 text-xs"></i>
+                    </div>
+                </div>
+
+                <div id="deleteAuthError" class="hidden text-xs text-red-600 bg-red-50 p-2 rounded-lg border border-red-200 font-medium text-center">
+                    <i class="fa-solid fa-circle-exclamation mr-1"></i> Kata sandi salah! Penghapusan dibatalkan.
+                </div>
+
+                <div class="flex items-center gap-2 pt-2">
+                    <button type="button" onclick="closeDeleteAuthModal()" class="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition">Batal</button>
+                    <button type="submit" class="w-1/2 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs shadow-md transition">Konfirmasi Hapus</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Input New Report -->
+    <div id="newReportModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full my-8 overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-5 bg-slate-900 text-white flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 bg-amber-500 text-slate-950 font-bold rounded-lg flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-plus"></i>
+                    </div>
+                    <h3 class="font-bold text-base">PEN-TRACK - Input Temuan & Issue Baru</h3>
+                </div>
+                <button onclick="closeNewReportModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="reportForm" onsubmit="handleFormSubmit(event)" class="p-6 space-y-4 overflow-y-auto flex-1">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Judul Temuan / Kasus *</label>
+                        <input type="text" id="formTitle" required placeholder="Contoh: Kebocoran oli pada mesin line B..." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Tanggal & Waktu Temuan *</label>
+                        <input type="datetime-local" id="formDatetime" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Area / Lokasi Pabrik *</label>
+                        <input type="text" id="formArea" required placeholder="Ketik lokasi spesifik pabrik..." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Kategori Anomali / Issue *</label>
+                        <select id="formCategory" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+                            <option value="">-- Pilih Kategori --</option>
+                            <option value="K3/HSE">K3 / HSE (Keselamatan Kerja)</option>
+                            <option value="Quality Control">Quality Control (Mutu Produk)</option>
+                            <option value="Maintenance">Maintenance / Mesin & Fasilitas</option>
+                            <option value="Operational">Operational / Standar Prosedur (SOP)</option>
+                            <option value="Lingkungan">Lingkungan (EHS / Limbah)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Tingkat Risiko (Severity) *</label>
+                        <select id="formSeverity" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+                            <option value="Low">Low - Ringan / Potensi Kecil</option>
+                            <option value="Medium" selected>Medium - Sedang / Perlu Perhatian</option>
+                            <option value="High">High - Tinggi / Berbahaya</option>
+                            <option value="Critical">Critical - Kritis / Hentikan Operasi</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Penanggung Jawab (PIC CAPA) *</label>
+                        <input type="text" id="formPic" required placeholder="Nama PIC / Departemen Penanggung Jawab" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Deskripsi Detail Temuan *</label>
+                    <textarea id="formDescription" rows="3" required placeholder="Jelaskan secara rinci kondisi fisik atau penyimpangan prosedur yang ditemukan..." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 outline-none"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Tindakan Langsung atau Rencana Perbaikan *</label>
+                    <input type="text" id="formImmediateAction" required placeholder="Tuliskan tindakan langsung atau rencana perbaikan awal yang dilakukan di tempat..." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Target Selesai Perbaikan (Deadline CAPA) *</label>
+                    <input type="date" id="formDeadline" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+
+                <!-- Foto Bukti Temuan Awal -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Foto Bukti Lapangan (Kondisi Awal)</label>
+                    <div class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:bg-slate-50 transition cursor-pointer relative" onclick="document.getElementById('fileInput').click()">
+                        <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleImageSelect(event)">
+                        <div id="uploadPlaceholder">
+                            <i class="fa-solid fa-cloud-arrow-up text-2xl text-slate-400 mb-1"></i>
+                            <p class="text-xs text-slate-600 font-medium">Klik untuk memilih foto dari perangkat Anda</p>
+                            <p class="text-[10px] text-slate-400">PNG, JPG up to 5MB</p>
+                        </div>
+                        <img id="imagePreview" class="hidden max-h-40 mx-auto rounded-lg object-cover shadow-sm">
+                    </div>
+                </div>
+
+                <div class="pt-3 border-t border-slate-200 flex justify-end gap-3">
+                    <button type="button" onclick="closeNewReportModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl text-xs transition">Batal</button>
+                    <button type="submit" class="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs shadow-md transition">Kirim Ke PEN-TRACK</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Detail Report & CAPA Update (Unlocked CAPA) -->
+    <div id="detailModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full my-8 overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-5 bg-slate-900 text-white flex justify-between items-center no-print">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-magnifying-glass-chart text-amber-500 text-lg"></i>
+                    <h3 class="font-bold text-base">Detail PEN-TRACK & Tracking CAPA</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="triggerDeleteAuthFromModal()" title="Hapus Laporan" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-xs font-semibold rounded-lg text-white flex items-center gap-1.5 shadow-sm transition">
+                        <i class="fa-solid fa-trash-can"></i> Hapus
+                    </button>
+                    <button onclick="window.print()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-lg text-slate-200 flex items-center gap-1.5 border border-slate-700">
+                        <i class="fa-solid fa-print"></i> Cetak Dokumen Resmi
+                    </button>
+                    <button onclick="closeDetailModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Printable Container -->
+            <div id="modalPrintArea" class="p-6 overflow-y-auto flex-1 space-y-6">
+                
+                <!-- Printable Header Format -->
+                <div class="print-only mb-6 border-b-2 border-slate-900 pb-4">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-amber-500 text-slate-950 font-black rounded-lg flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-chart-line"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-xl font-black text-slate-900 tracking-tight">PEN-TRACK - LAPORAN ANOMALI & PERBAIKAN</h1>
+                                <p class="text-xs text-slate-600">Issue Tracking & Continuous Improvement Platform</p>
+                            </div>
+                        </div>
+                        <div class="text-right text-xs">
+                            <p class="font-bold">STATUS: <span id="printStatus">OPEN</span></p>
+                            <p id="printReportId" class="font-mono text-slate-500">PTK-2026-000</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Summary Header Card -->
+                <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">No. Ref PEN-TRACK</span>
+                        <h4 id="detailReportId" class="text-lg font-mono font-bold text-slate-900">PTK-2026-001</h4>
+                    </div>
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Judul Kasus</span>
+                        <p id="detailTitle" class="text-xs font-bold text-slate-800">Kebocoran Uap Panas</p>
+                    </div>
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Tanggal Ditemukan</span>
+                        <p id="detailDate" class="text-xs font-medium text-slate-800">01 Oct 2026 09:30</p>
+                    </div>
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Area / Lokasi</span>
+                        <p id="detailArea" class="text-xs font-medium text-slate-800">Area Utility & Boiler House</p>
+                    </div>
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Tingkat Risiko</span>
+                        <div id="detailSeverityBadge" class="mt-0.5"></div>
+                    </div>
+                </div>
+
+                <!-- Incident Form Details Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div>
+                            <h5 class="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">Kategori Anomali / Issue</h5>
+                            <p id="detailCategory" class="text-sm font-semibold text-slate-800 bg-slate-100 p-2.5 rounded-xl border border-slate-200">K3/HSE</p>
+                        </div>
+
+                        <div>
+                            <h5 class="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">Deskripsi Temuan Lapangan</h5>
+                            <div id="detailDescription" class="text-xs text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-200 leading-relaxed min-h-[80px]">
+                                -
+                            </div>
+                        </div>
+
+                        <div>
+                            <h5 class="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">Tindakan Langsung atau Rencana Perbaikan</h5>
+                            <div id="detailImmediateAction" class="text-xs text-slate-700 bg-amber-50/60 border border-amber-200 p-3 rounded-xl leading-relaxed">
+                                -
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h5 class="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">Foto Kondisi Awal Lapangan (Before)</h5>
+                            <div class="bg-slate-100 border border-slate-200 rounded-xl overflow-hidden flex items-center justify-center min-h-[160px]">
+                                <img id="detailImage" src="" alt="Foto Temuan Awal" class="w-full h-48 object-cover">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 text-xs">
+                            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">PIC Penanggung Jawab</span>
+                                <span id="detailPic" class="font-semibold text-slate-800">Budi Santoso</span>
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Deadline CAPA</span>
+                                <span id="detailDeadline" class="font-semibold text-amber-600">05 Oct 2026</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Display CAPA Completion Proof Images Gallery (After Proofs) -->
+                <div id="capaProofSection" class="border-t border-slate-200 pt-4 space-y-2">
+                    <h5 class="text-xs font-bold uppercase text-slate-700 tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-file-circle-check text-emerald-600"></i> Bukti Lampiran Perbaikan Lapangan (CAPA Proof - After)
+                    </h5>
+                    <div id="capaProofGallery" class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
+                        <!-- Dynamic Proof Images -->
+                    </div>
+                </div>
+
+                <!-- Update Status & Upload Proof Attachment Form (Unlocked) -->
+                <div class="border-t border-slate-200 pt-5 space-y-3 no-print">
+                    <h5 class="text-xs font-bold uppercase text-slate-700 tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-arrows-spin text-amber-500"></i> Update Status & Upload Bukti Perbaikan (CAPA)
+                    </h5>
+
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Ubah Status Laporan</label>
+                                <select id="updateStatusSelect" class="w-full p-2 bg-white border border-slate-300 rounded-lg text-xs font-semibold outline-none focus:ring-2 focus:ring-amber-500">
+                                    <option value="Open">Open - Belum Ditangani</option>
+                                    <option value="In Progress">In Progress - Dalam Perbaikan</option>
+                                    <option value="Closed">Closed - Perbaikan Tuntas & Diverifikasi</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Catatan Perbaikan (CAPA Note)</label>
+                                <input type="text" id="updateCapaNote" placeholder="Tuliskan tindakan perbaikan yang telah diambil..." class="w-full p-2 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-amber-500">
+                            </div>
+                        </div>
+
+                        <!-- CAPA Attachment Upload Field -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Unggah Lampiran Bukti Foto Perbaikan Lapangan</label>
+                            <div class="border border-dashed border-slate-300 bg-white rounded-xl p-3 text-center hover:bg-slate-100 transition cursor-pointer" onclick="document.getElementById('capaFileInput').click()">
+                                <input type="file" id="capaFileInput" accept="image/*" class="hidden" onchange="handleCapaImageSelect(event)">
+                                <div id="capaUploadPlaceholder" class="flex items-center justify-center gap-2 text-slate-500">
+                                    <i class="fa-solid fa-paperclip text-amber-500"></i>
+                                    <span class="text-xs font-medium">Klik untuk melampirkan foto/bukti perbaikan selesai</span>
+                                </div>
+                                <img id="capaImagePreview" class="hidden max-h-32 mx-auto rounded-lg object-cover mt-2 shadow-sm">
+                            </div>
+                        </div>
+
+                        <button onclick="saveCapaUpdate()" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-lg text-xs transition shadow-sm flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-floppy-disk text-amber-400"></i> Perbarui Status & Simpan Lampiran Bukti CAPA
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Display CAPA History Notes Log -->
+                <div>
+                    <h5 class="text-xs font-bold uppercase text-slate-500 tracking-wider mb-2">Riwayat Catatan Perbaikan (CAPA Log)</h5>
+                    <div id="capaHistory" class="space-y-2"></div>
+                </div>
+
+                <!-- Official Signatures for Printable Document View -->
+                <div class="print-only pt-12">
+                    <div class="grid grid-cols-3 text-center text-xs">
+                        <div>
+                            <p class="mb-12 font-medium">Pelapor / Inspector</p>
+                            <p class="font-bold border-b border-slate-400 inline-block px-4">(&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</p>
+                        </div>
+                        <div>
+                            <p class="mb-12 font-medium">PIC Penanggung Jawab</p>
+                            <p class="font-bold border-b border-slate-400 inline-block px-4" id="printPicName">( Budi Santoso )</p>
+                        </div>
+                        <div>
+                            <p class="mb-12 font-medium">Manager Continuous Improvement / HSE</p>
+                            <p class="font-bold border-b border-slate-400 inline-block px-4">(&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Universal System Access Password (App Entry, Action Access, and Delete Approval)
+        const ACTION_PASSWORD = "dankospen";
+        
+        // Data Dummy PEN-TRACK Initial Records
+        let reports = [
+            {
+                id: "PTK-2026-001",
+                title: "Kebocoran Uap Panas pada Flange Valve Line #2",
+                datetime: "2026-10-01T08:30",
+                area: "Area Utility & Boiler House",
+                category: "K3/HSE",
+                severity: "Critical",
+                description: "Kebocoran uap panas (steam leak) bertekanan tinggi pada valve utama line #2. Berpotensi bahaya luka bakar serius bagi operator yang melintas.",
+                immediateAction: "Memasang barikade / safety line dan mengisolasi jalur sekitar valve.",
+                pic: "Eko Prasetyo (Maintenance)",
+                deadline: "2026-10-02",
+                status: "Open",
+                image: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80",
+                capaNotes: ["01 Oct 08:35 - PEN-TRACK terdaftar oleh Inspector HSE."],
+                capaProofs: []
+            },
+            {
+                id: "PTK-2026-002",
+                title: "Penyimpanan Chemical Tanpa Secondary Containment",
+                datetime: "2026-09-30T14:15",
+                area: "Gudang Bahan Baku (Raw Material)",
+                category: "Lingkungan",
+                severity: "High",
+                description: "Penyimpanan bahan kimia cair drum polimer tidak dilengkapi Secondary Containment (spill pallet). Berisiko tumpahan ke drainase.",
+                immediateAction: "Memindahkan drum sementara ke area beratap berpagar pelindung.",
+                pic: "Siti Rahma (Warehouse)",
+                deadline: "2026-10-03",
+                status: "In Progress",
+                image: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=600&q=80",
+                capaNotes: [
+                    "30 Sep 14:20 - Laporan diterima tim gudang.",
+                    "01 Oct 09:00 - Pengajuan unit spill pallet baru dalam proses approval."
+                ],
+                capaProofs: []
+            },
+            {
+                id: "PTK-2026-003",
+                title: "Pelanggaran SOP Inspeksi Mesin Harian Shift 1",
+                datetime: "2026-09-29T10:00",
+                area: "Area Produksi Line A",
+                category: "Operational",
+                severity: "Medium",
+                description: "Operator tidak mengisi logbook checklist pemeriksaan mesin harian sebelum pengoperasian shift 1.",
+                immediateAction: "Menegur operator dan mewajibkan pengisian retrofit checklist.",
+                pic: "Agus Setiawan (Production)",
+                deadline: "2026-09-30",
+                status: "Closed",
+                image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=600&q=80",
+                capaNotes: [
+                    "29 Sep 10:05 - PEN-TRACK dibuka.",
+                    "30 Sep 16:00 - Refreshment briefing SOP harian telah dilaksanakan. Logbook terisi lengkap."
+                ],
+                capaProofs: ["https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=600&q=80"]
+            },
+            {
+                id: "PTK-2026-004",
+                title: "Lampu Penerangan Bench QC Redup & Kedip",
+                datetime: "2026-09-28T16:45",
+                area: "Laboratorium Quality Control",
+                category: "Quality Control",
+                severity: "Low",
+                description: "Lampu penerangan utama bench pengujian QC redup dan berkedip, mengganggu presisi visual sampel.",
+                immediateAction: "Menggunakan lampu meja portabel cadangan.",
+                pic: "Hendra (Facility)",
+                deadline: "2026-10-01",
+                status: "Closed",
+                image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=600&q=80",
+                capaNotes: [
+                    "28 Sep 17:00 - PEN-TRACK dibuat.",
+                    "29 Sep 09:30 - Penggantian neon LED baru selesai."
+                ],
+                capaProofs: ["https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&w=600&q=80"]
+            }
+        ];
+
+        let pendingReportActionId = null;
+        let pendingReportDeleteId = null;
+        let currentActiveReportId = null;
+        let selectedImageDataUrl = null;
+        let selectedCapaImageDataUrl = null;
+        let categoryChartInstance = null;
+        let severityChartInstance = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const isUnlocked = localStorage.getItem('pentrack_unlocked');
+            if (isUnlocked === 'true') {
+                showApp();
+            } else {
+                document.getElementById('lockScreen').classList.remove('hidden');
+                document.getElementById('mainApp').classList.add('hidden');
+            }
+            updateCurrentDate();
+        });
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const pass = document.getElementById('passwordInput').value;
+            const errorEl = document.getElementById('loginError');
+
+            if (pass === ACTION_PASSWORD) {
+                localStorage.setItem('pentrack_unlocked', 'true');
+                errorEl.classList.add('hidden');
+                showApp();
+            } else {
+                errorEl.classList.remove('hidden');
+            }
+        }
+
+        function lockApplication() {
+            localStorage.removeItem('pentrack_unlocked');
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('flex');
+            document.getElementById('lockScreen').classList.remove('hidden');
+            document.getElementById('passwordInput').value = '';
+        }
+
+        function showApp() {
+            document.getElementById('lockScreen').classList.add('hidden');
+            const mainApp = document.getElementById('mainApp');
+            mainApp.classList.remove('hidden');
+            mainApp.classList.add('flex');
+            
+            renderTable();
+            updateKPIs();
+            initCharts();
+        }
+
+        function updateCurrentDate() {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const today = new Date();
+            document.getElementById('currentDateDisplay').textContent = today.toLocaleDateString('id-ID', options);
+        }
+
+        function initCharts() {
+            // Category Chart
+            const ctxCat = document.getElementById('categoryChart').getContext('2d');
+            if(categoryChartInstance) categoryChartInstance.destroy();
+
+            const categories = ['K3/HSE', 'Quality Control', 'Maintenance', 'Operational', 'Lingkungan'];
+            const catCounts = categories.map(cat => reports.filter(r => r.category === cat).length);
+
+            categoryChartInstance = new Chart(ctxCat, {
+                type: 'doughnut',
+                data: {
+                    labels: categories,
+                    datasets: [{
+                        data: catCounts,
+                        backgroundColor: ['#ef4444', '#3b82f6', '#f59e0b', '#10b981', '#8b5cf6'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+                    }
+                }
+            });
+
+            // Severity Chart
+            const ctxSev = document.getElementById('severityChart').getContext('2d');
+            if(severityChartInstance) severityChartInstance.destroy();
+
+            const severities = ['Low', 'Medium', 'High', 'Critical'];
+            const openSevData = severities.map(s => reports.filter(r => r.severity === s && r.status !== 'Closed').length);
+            const closedSevData = severities.map(s => reports.filter(r => r.severity === s && r.status === 'Closed').length);
+
+            severityChartInstance = new Chart(ctxSev, {
+                type: 'bar',
+                data: {
+                    labels: severities,
+                    datasets: [
+                        { label: 'Active / Open', data: openSevData, backgroundColor: '#f59e0b' },
+                        { label: 'Closed / Solved', data: closedSevData, backgroundColor: '#10b981' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 } }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+                    }
+                }
+            });
+        }
+
+        function updateKPIs() {
+            document.getElementById('statTotal').textContent = reports.length;
+            document.getElementById('statOpen').textContent = reports.filter(r => r.status === 'Open').length;
+            document.getElementById('statInProgress').textContent = reports.filter(r => r.status === 'In Progress').length;
+            document.getElementById('statClosed').textContent = reports.filter(r => r.status === 'Closed').length;
+        }
+
+        function renderTable(dataToRender = reports) {
+            const tbody = document.getElementById('reportsTableBody');
+            const emptyState = document.getElementById('emptyState');
+            tbody.innerHTML = '';
+
+            document.getElementById('tableRecordCount').textContent = `Showing ${dataToRender.length} entries`;
+
+            if (dataToRender.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            dataToRender.forEach(report => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/80 transition duration-150 border-b border-slate-100';
+
+                let statusBadge = '';
+                if(report.status === 'Open') {
+                    statusBadge = `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-100 text-red-700"><i class="fa-solid fa-circle text-[6px]"></i> Open</span>`;
+                } else if(report.status === 'In Progress') {
+                    statusBadge = `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700"><i class="fa-solid fa-spinner text-[8px] animate-spin"></i> In Progress</span>`;
+                } else {
+                    statusBadge = `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700"><i class="fa-solid fa-check text-[8px]"></i> Closed</span>`;
+                }
+
+                let severityTag = '';
+                if(report.severity === 'Critical') {
+                    severityTag = `<span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-rose-600 text-white uppercase">Critical</span>`;
+                } else if(report.severity === 'High') {
+                    severityTag = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-500 text-white uppercase">High</span>`;
+                } else if(report.severity === 'Medium') {
+                    severityTag = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-400 text-slate-900 uppercase">Medium</span>`;
+                } else {
+                    severityTag = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200 text-slate-700 uppercase">Low</span>`;
+                }
+
+                const formattedDate = new Date(report.datetime).toLocaleString('id-ID', {
+                    day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                });
+
+                tr.innerHTML = `
+                    <td class="p-4 font-mono font-bold text-slate-900">${report.id}</td>
+                    <td class="p-4">
+                        <div class="font-medium text-slate-800">${report.area}</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">${formattedDate}</div>
+                    </td>
+                    <td class="p-4">
+                        <div class="font-medium text-slate-700 mb-1">${report.category}</div>
+                        ${severityTag}
+                    </td>
+                    <td class="p-4 max-w-xs">
+                        <div class="font-semibold text-slate-800 text-xs truncate">${report.title || report.description}</div>
+                        <p class="truncate text-slate-500 text-[11px] mt-0.5">${report.description}</p>
+                    </td>
+                    <td class="p-4">
+                        <div class="font-medium text-slate-800">${report.pic}</div>
+                        <div class="text-[10px] text-amber-700 font-semibold mt-0.5">Deadline: ${report.deadline}</div>
+                        <div>
+                            ${(() => {
+                                if (report.status === 'Closed') {
+                                    return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 mt-1"><i class="fa-solid fa-circle-check"></i> Selesai Tuntas</span>`;
+                                }
+                                const today = new Date();
+                                today.setHours(0,0,0,0);
+                                const deadlineDate = new Date(report.deadline);
+                                deadlineDate.setHours(0,0,0,0);
+                                const diffTime = deadlineDate - today;
+                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                                if (diffDays > 0) {
+                                    return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 mt-1"><i class="fa-solid fa-clock"></i> Sisa ${diffDays} Hari Lagi</span>`;
+                                } else if (diffDays === 0) {
+                                    return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-800 border border-orange-300 mt-1"><i class="fa-solid fa-hourglass-half animate-pulse"></i> Hari Ini Deadline!</span>`;
+                                } else {
+                                    return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 border border-red-300 mt-1"><i class="fa-solid fa-triangle-exclamation"></i> Terlambat ${Math.abs(diffDays)} Hari</span>`;
+                                }
+                            })()}
+                        </div>
+                    </td>
+                    <td class="p-4">${statusBadge}</td>
+                    <td class="p-4 text-center">
+                        <div class="flex items-center justify-center gap-1">
+                            <button onclick="triggerActionAuth('${report.id}')" title="Lihat Detail & Aksi" class="p-2 bg-slate-100 hover:bg-amber-500 hover:text-slate-950 text-slate-700 rounded-xl transition shadow-sm font-semibold text-xs flex items-center gap-1">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                            <button onclick="triggerDeleteAuth('${report.id}')" title="Hapus Laporan" class="p-2 bg-slate-100 hover:bg-red-600 hover:text-white text-slate-700 rounded-xl transition shadow-sm text-xs flex items-center gap-1">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterReports() {
+            const searchVal = document.getElementById('searchInput').value.toLowerCase();
+            const catVal = document.getElementById('filterCategory').value;
+            const sevVal = document.getElementById('filterSeverity').value;
+            const statusVal = document.getElementById('filterStatus').value;
+
+            const filtered = reports.filter(r => {
+                const matchesSearch = r.id.toLowerCase().includes(searchVal) ||
+                                      (r.title && r.title.toLowerCase().includes(searchVal)) ||
+                                      r.description.toLowerCase().includes(searchVal) ||
+                                      r.area.toLowerCase().includes(searchVal) ||
+                                      r.pic.toLowerCase().includes(searchVal);
+                const matchesCat = catVal === '' || r.category === catVal;
+                const matchesSev = sevVal === '' || r.severity === sevVal;
+                const matchesStatus = statusVal === '' || r.status === statusVal;
+
+                return matchesSearch && matchesCat && matchesSev && matchesStatus;
+            });
+
+            renderTable(filtered);
+        }
+
+        function triggerDeleteAuth(id) {
+            pendingReportDeleteId = id;
+            document.getElementById('deleteAuthPassword').value = '';
+            document.getElementById('deleteAuthError').classList.add('hidden');
+            document.getElementById('deleteAuthModal').classList.remove('hidden');
+        }
+
+        function triggerDeleteAuthFromModal() {
+            if (currentActiveReportId) {
+                triggerDeleteAuth(currentActiveReportId);
+            }
+        }
+
+        function closeDeleteAuthModal() {
+            document.getElementById('deleteAuthModal').classList.add('hidden');
+            pendingReportDeleteId = null;
+        }
+
+        function handleDeleteAuth(e) {
+            e.preventDefault();
+            const enteredPass = document.getElementById('deleteAuthPassword').value;
+            const errorEl = document.getElementById('deleteAuthError');
+
+            if (enteredPass === ACTION_PASSWORD) {
+                errorEl.classList.add('hidden');
+                const targetId = pendingReportDeleteId;
+                
+                reports = reports.filter(r => r.id !== targetId);
+                
+                closeDeleteAuthModal();
+                if (currentActiveReportId === targetId) {
+                    closeDetailModal();
+                }
+                
+                filterReports();
+                updateKPIs();
+                initCharts();
+            } else {
+                errorEl.classList.remove('hidden');
+            }
+        }
+
+        function triggerActionAuth(reportId) {
+            pendingReportActionId = reportId;
+            document.getElementById('actionAuthPassword').value = '';
+            document.getElementById('actionAuthError').classList.add('hidden');
+            document.getElementById('actionAuthModal').classList.remove('hidden');
+        }
+
+        function closeActionAuthModal() {
+            document.getElementById('actionAuthModal').classList.add('hidden');
+            pendingReportActionId = null;
+        }
+
+        function handleActionAuth(e) {
+            e.preventDefault();
+            const enteredPass = document.getElementById('actionAuthPassword').value;
+            const errorEl = document.getElementById('actionAuthError');
+
+            if (enteredPass === ACTION_PASSWORD) {
+                errorEl.classList.add('hidden');
+                const targetId = pendingReportActionId;
+                closeActionAuthModal();
+                openDetailModal(targetId);
+            } else {
+                errorEl.classList.remove('hidden');
+            }
+        }
+
+        function openNewReportModal() {
+            document.getElementById('newReportModal').classList.remove('hidden');
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('formDatetime').value = now.toISOString().slice(0,16);
+            
+            const deadline = new Date();
+            deadline.setDate(deadline.getDate() + 3);
+            document.getElementById('formDeadline').value = deadline.toISOString().slice(0,10);
+        }
+
+        function closeNewReportModal() {
+            document.getElementById('newReportModal').classList.add('hidden');
+            document.getElementById('reportForm').reset();
+            document.getElementById('imagePreview').classList.add('hidden');
+            document.getElementById('uploadPlaceholder').classList.remove('hidden');
+            selectedImageDataUrl = null;
+        }
+
+        function handleImageSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    selectedImageDataUrl = e.target.result;
+                    const preview = document.getElementById('imagePreview');
+                    preview.src = selectedImageDataUrl;
+                    preview.classList.remove('hidden');
+                    document.getElementById('uploadPlaceholder').classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            const newId = `PTK-2026-${String(reports.length + 1).padStart(3, '0')}`;
+            const defaultImage = "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=600&q=80";
+
+            const newReport = {
+                id: newId,
+                title: document.getElementById('formTitle').value,
+                datetime: document.getElementById('formDatetime').value,
+                area: document.getElementById('formArea').value,
+                category: document.getElementById('formCategory').value,
+                severity: document.getElementById('formSeverity').value,
+                description: document.getElementById('formDescription').value,
+                immediateAction: document.getElementById('formImmediateAction').value,
+                pic: document.getElementById('formPic').value,
+                deadline: document.getElementById('formDeadline').value,
+                status: "Open",
+                image: selectedImageDataUrl || defaultImage,
+                capaNotes: [`${new Date().toLocaleDateString('id-ID')} - PEN-TRACK terdaftar.`],
+                capaProofs: []
+            };
+
+            reports.unshift(newReport);
+            closeNewReportModal();
+            
+            filterReports();
+            updateKPIs();
+            initCharts();
+        }
+
+        function handleCapaImageSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    selectedCapaImageDataUrl = e.target.result;
+                    const preview = document.getElementById('capaImagePreview');
+                    preview.src = selectedCapaImageDataUrl;
+                    preview.classList.remove('hidden');
+                    document.getElementById('capaUploadPlaceholder').classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function openDetailModal(id) {
+            const report = reports.find(r => r.id === id);
+            if (!report) return;
+
+            currentActiveReportId = id;
+            selectedCapaImageDataUrl = null;
+
+            document.getElementById('detailReportId').textContent = report.id;
+            document.getElementById('printReportId').textContent = report.id;
+            document.getElementById('printStatus').textContent = report.status.toUpperCase();
+            document.getElementById('detailTitle').textContent = report.title || report.id;
+            
+            document.getElementById('detailDate').textContent = new Date(report.datetime).toLocaleString('id-ID');
+            document.getElementById('detailArea').textContent = report.area;
+            document.getElementById('detailCategory').textContent = report.category;
+            document.getElementById('detailDescription').textContent = report.description;
+            document.getElementById('detailImmediateAction').textContent = report.immediateAction;
+            document.getElementById('detailPic').textContent = report.pic;
+            document.getElementById('printPicName').textContent = `( ${report.pic} )`;
+            document.getElementById('detailDeadline').textContent = report.deadline;
+            document.getElementById('detailImage').src = report.image;
+
+            document.getElementById('updateStatusSelect').value = report.status;
+            document.getElementById('updateCapaNote').value = '';
+            document.getElementById('capaImagePreview').classList.add('hidden');
+            document.getElementById('capaUploadPlaceholder').classList.remove('hidden');
+            document.getElementById('capaFileInput').value = '';
+
+            const badgeEl = document.getElementById('detailSeverityBadge');
+            if(report.severity === 'Critical') {
+                badgeEl.innerHTML = `<span class="px-2.5 py-1 rounded-md text-xs font-black bg-rose-600 text-white uppercase tracking-wide">Critical</span>`;
+            } else if(report.severity === 'High') {
+                badgeEl.innerHTML = `<span class="px-2.5 py-1 rounded-md text-xs font-bold bg-orange-500 text-white uppercase tracking-wide">High</span>`;
+            } else if(report.severity === 'Medium') {
+                badgeEl.innerHTML = `<span class="px-2.5 py-1 rounded-md text-xs font-bold bg-amber-400 text-slate-900 uppercase tracking-wide">Medium</span>`;
+            } else {
+                badgeEl.innerHTML = `<span class="px-2.5 py-1 rounded-md text-xs font-bold bg-slate-200 text-slate-700 uppercase tracking-wide">Low</span>`;
+            }
+
+            renderCapaHistory(report.capaNotes);
+            renderCapaProofs(report.capaProofs || []);
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        function renderCapaProofs(proofs) {
+            const gallery = document.getElementById('capaProofGallery');
+            gallery.innerHTML = '';
+
+            if (!proofs || proofs.length === 0) {
+                gallery.innerHTML = `<p class="text-xs text-slate-400 italic col-span-3">Belum ada lampiran foto bukti perbaikan yang diunggah.</p>`;
+                return;
+            }
+
+            proofs.forEach((imgUrl, index) => {
+                const imgCard = document.createElement('div');
+                imgCard.className = 'relative group rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shadow-sm';
+                imgCard.innerHTML = `
+                    <img src="${imgUrl}" alt="Bukti CAPA ${index + 1}" class="w-full h-28 object-cover group-hover:scale-105 transition duration-200">
+                    <div class="absolute bottom-0 inset-x-0 bg-slate-900/80 text-white text-[10px] p-1 text-center font-medium">
+                        Bukti Lampiran Selesai #${index + 1}
+                    </div>
+                `;
+                gallery.appendChild(imgCard);
+            });
+        }
+
+        function renderCapaHistory(notes) {
+            const historyContainer = document.getElementById('capaHistory');
+            historyContainer.innerHTML = '';
+
+            if(!notes || notes.length === 0) {
+                historyContainer.innerHTML = `<p class="text-xs text-slate-400 italic">Belum ada catatan tindakan perbaikan.</p>`;
+                return;
+            }
+
+            notes.forEach(note => {
+                const item = document.createElement('div');
+                item.className = 'text-xs bg-slate-100 p-2.5 rounded-lg border border-slate-200 text-slate-700 flex items-start gap-2';
+                item.innerHTML = `<i class="fa-solid fa-angle-right text-amber-500 mt-0.5"></i> <span>${note}</span>`;
+                historyContainer.appendChild(item);
+            });
+        }
+
+        function saveCapaUpdate() {
+            if(!currentActiveReportId) return;
+
+            const report = reports.find(r => r.id === currentActiveReportId);
+            if(!report) return;
+
+            const newStatus = document.getElementById('updateStatusSelect').value;
+            const capaNoteText = document.getElementById('updateCapaNote').value.trim();
+
+            report.status = newStatus;
+            if(!report.capaProofs) report.capaProofs = [];
+            
+            const timestamp = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+
+            if(selectedCapaImageDataUrl) {
+                report.capaProofs.push(selectedCapaImageDataUrl);
+            }
+
+            if(capaNoteText !== '' || selectedCapaImageDataUrl) {
+                const attachmentMsg = selectedCapaImageDataUrl ? " [Lampiran Bukti Foto Diunggah]" : "";
+                report.capaNotes.push(`${timestamp} - Status: [${newStatus}] - ${capaNoteText || 'Tindakan perbaikan diperbarui'}${attachmentMsg}`);
+            }
+
+            renderCapaHistory(report.capaNotes);
+            renderCapaProofs(report.capaProofs);
+
+            document.getElementById('updateCapaNote').value = '';
+            document.getElementById('capaImagePreview').classList.add('hidden');
+            document.getElementById('capaUploadPlaceholder').classList.remove('hidden');
+            document.getElementById('capaFileInput').value = '';
+            selectedCapaImageDataUrl = null;
+
+            document.getElementById('printStatus').textContent = newStatus.toUpperCase();
+
+            filterReports();
+            updateKPIs();
+            initCharts();
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+            currentActiveReportId = null;
+            selectedCapaImageDataUrl = null;
+        }
+    </script>
+</body>
+</html>
